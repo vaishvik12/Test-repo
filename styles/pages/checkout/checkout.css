@@ -209,3 +209,15 @@
   margin-top: 11px;
   margin-bottom: 15px;
 }
+
+.update-not-in-use{
+  display : none;
+}
+
+.update-input{
+  width : 30px;
+}
+
+.update-in-use{
+  display : inline;
+}
