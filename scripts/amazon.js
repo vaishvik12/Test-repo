@@ -1,5 +1,5 @@
 import { products } from "../data/products.js";
-import { cart, addToCart } from "../data/cart.js";
+import { cart, addToCart, calculateCartQuantity } from "../data/cart.js";
 import { convertCurrency } from "./utils/currency.js";
 
 
@@ -60,32 +60,19 @@ products.forEach((product) => {
 </div>`;
 });
 
-function updateCartQuantity(){
-    let cartQuantity = document.querySelector(".js-cart-quantity");
+function addedToCart(productId) {
 
-    let totalCartItems = 0;
+  let addedToCartDiv = document.querySelector(`.js-added-to-cart-${productId}`);
 
-    cart.forEach(cartItem => {
-      totalCartItems += cartItem.quantity;
-    });
+  addedToCartDiv.style.opacity = 1;
 
-    cartQuantity.innerHTML = totalCartItems;
-};
+  if (timeoutIds[productId]) {
+    clearTimeout(timeoutIds[productId]);
+  }
 
-
-function addedToCart(productId){
-  
-    let addedToCartDiv = document.querySelector(`.js-added-to-cart-${productId}`);
-
-    addedToCartDiv.style.opacity = 1;
-
-    if(timeoutIds[productId]){
-      clearTimeout(timeoutIds[productId]);
-    }
-
-    timeoutIds[productId] = setTimeout(() => {
-      addedToCartDiv.style.opacity = 0;
-    },2000);
+  timeoutIds[productId] = setTimeout(() => {
+    addedToCartDiv.style.opacity = 0;
+  }, 2000);
 
 }
 
@@ -96,10 +83,11 @@ grid.innerHTML = productHtml;
 
 let addToCartBttn = document.querySelectorAll(".js-add-to-cart");
 let timeoutIds = {};
+let cartQuantity = document.querySelector(".js-cart-quantity");
 
 addToCartBttn.forEach(button => {
   button.addEventListener("click", () => {
-    let {productId,productName} = button.dataset;
+    let { productId, productName } = button.dataset;
 
     let selectorDiv = document.querySelectorAll(".js-product-quantity");
     let quantity = 0;
@@ -110,12 +98,14 @@ addToCartBttn.forEach(button => {
       }
     })
 
-    addToCart(productId,quantity);
-    updateCartQuantity();
+    addToCart(productId, quantity);
+    let totalCartItems = calculateCartQuantity();
+    cartQuantity.innerHTML = totalCartItems;
     addedToCart(productId);
     console.log(cart);
   })
 })
 
-
+let totalCartItems = calculateCartQuantity();
+cartQuantity.innerHTML = totalCartItems;
 
