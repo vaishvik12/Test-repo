@@ -1,7 +1,10 @@
 import { products } from "../data/products.js";
 import { cart, addToCart, calculateCartQuantity } from "../data/cart.js";
-import { convertCurrency } from "./utils/currency.js";
+import  convertCurrency  from "./utils/currency.js";
+import { hello } from "https://unpkg.com/supersimpledev@1.0.1/hello.esm.js";
 
+
+hello();
 
 let productHtml = ``;
 const product1 = '';
