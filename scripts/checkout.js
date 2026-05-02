@@ -26,17 +26,16 @@ cart.forEach(cartItem => {
     let matchingShippingOption;
 
     shipping.forEach(option => {
-      if(cartItem.shippingId === option.shippingId){
+      if(String(cartItem.shippingId) === String(option.shippingId)){
         matchingShippingOption = option;
       }
     });
 
-    let todaysDate = dayjs();
     let shippingDate = todayDate.add(matchingShippingOption.shippingDays, "days");
 
 
 cartHtml += `
-<div class="cart-item-container js-cart-itme-container-${matchingItem.id}">
+<div class="cart-item-container js-cart-item-container-${matchingItem.id}">
   <div class="delivery-date">
     Delivery date: ${shippingDate.format("dddd, MMMM D")}
   </div>
@@ -80,6 +79,7 @@ cartHtml += `
   </div>
 </div>
 `
+genrateOrderSummary();
 });
 
 function genrateDeliveryOptions(matchingItem, cartItem){
@@ -94,10 +94,12 @@ function genrateDeliveryOptions(matchingItem, cartItem){
      ?  "Free Shipping"
       : `$${convertCurrency(option.priceCents)}`;
 
-    let isChecked = cartItem.shippingId === option.shippingId;
+    let isChecked = String(cartItem.shippingId) === String(option.shippingId);
 
     shippingHtml +=
-      `  <div class="delivery-option">
+      `  <div data-product-id = ${matchingItem.id}
+          data-shipping-id = ${option.shippingId}
+      class="delivery-option">
         <input type="radio" 
         ${isChecked ? "checked" : ""}
         class="delivery-option-input"
@@ -136,10 +138,11 @@ deleteButtons.forEach(deleteButton => {
   deleteButton.addEventListener("click", () => {
     const productId = deleteButton.dataset.productId;
     removeFromCart(productId);
-    let matchingDiv = document.querySelector(`.js-cart-itme-container-${productId}`);
+    let matchingDiv = document.querySelector(`.js-cart-item-container-${productId}`);
     matchingDiv.remove();
     let quantity = calculateCartQuantity();
     returnLink.innerHTML = `${quantity} items`;
+    renderCheckout();
   });
 });
 
@@ -185,6 +188,99 @@ saveButtons.forEach(saveButton => {
     renderCheckout();
   })
 })
+
+let deliveryOptions = document.querySelectorAll('.delivery-option');
+
+deliveryOptions.forEach(option => {
+  option.addEventListener("click", () => {
+    let {productId, shippingId} = option.dataset;
+    
+
+    let matchingProduct;
+    cart.forEach(cartItem => {
+      if(cartItem.productId === productId){
+        matchingProduct = cartItem;
+      }
+    });
+
+    matchingProduct.shippingId = shippingId;
+    console.log(cart);
+    saveToStorage();
+    renderCheckout();
+  })
+})
+}
+
+
+function genrateOrderSummary(){
+
+  let itemsPrice = 0;
+  let totalItems = 0;
+  let shippingAndHandling = 0;
+  let totalBeforeTax = 0;
+  let estimatedTax = 0;
+  let totalAfterTax = 0;
+  let tax = 0.1;
+
+
+
+  cart.forEach(cartItem => {
+    let productId = cartItem.productId;
+    
+    products.forEach(product => {
+      if(product.id === productId){
+        itemsPrice += product.priceCents * cartItem.quantity;
+      }
+    })
+
+   shipping.forEach(option => {
+      if(String(option.shippingId) === String(cartItem.shippingId)){
+        shippingAndHandling += option.priceCents;
+      }
+  })
+  });
+
+totalBeforeTax = itemsPrice + shippingAndHandling;
+estimatedTax = totalBeforeTax * tax;
+
+let paymentHtml = 
+  `
+<div class="payment-summary-title">
+        Order Summary
+      </div>
+
+      <div class="payment-summary-row">
+        <div>Items (${calculateCartQuantity()}):</div>
+        <div class="payment-summary-money">$${convertCurrency(itemsPrice)}</div>
+      </div>
+
+      <div class="payment-summary-row">
+        <div>Shipping &amp; handling:</div>
+        <div class="payment-summary-money">$${convertCurrency(shippingAndHandling)}</div>
+      </div>
+
+      <div class="payment-summary-row subtotal-row">
+        <div>Total before tax:</div>
+        <div class="payment-summary-money">$${convertCurrency(totalBeforeTax)}</div>
+      </div>
+
+      <div class="payment-summary-row">
+        <div>Estimated tax (10%):</div>
+        <div class="payment-summary-money">$${convertCurrency(estimatedTax)}</div>
+      </div>
+
+      <div class="payment-summary-row total-row">
+        <div>Order total:</div>
+        <div class="payment-summary-money">$${convertCurrency(totalBeforeTax + estimatedTax)}</div>
+      </div>
+
+      <button class="place-order-button button-primary">
+        Place your order
+      </button>
+  `
+  
+  let paymnetDiv = document.querySelector('.js-payment-summary');
+  paymnetDiv.innerHTML = paymentHtml;
 }
 
 
